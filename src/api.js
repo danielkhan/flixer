@@ -1,5 +1,5 @@
 const api = {
-    "api-key": process.env.API_KEY
+    "api-key": "86fbd6aff3aef98be317f5a3f2e7a566"
 };
 
 export default api;
