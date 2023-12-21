@@ -6,6 +6,17 @@ import { useState,useEffect } from "react";
 import styled from "styled-components";
 import { colors } from "@/constants";
 import MovieTrack from "@/components/MovieTrack";
+import * as Sentry from '@sentry/browser';
+
+function parseUserAgent(ua) {
+    let browserName = ua.match(/(firefox|msie|trident|chrome|safari|edg|opera|opr)[\/\s]?(\d+(\.\d+)?)/i);
+    let osName = ua.match(/(windows nt|macintosh|linux|ubuntu|android|ios|iphone os|ipad os)[\s\/]?(\d+(\.\d+)?)?/i);
+  
+    let browser = browserName ? `${browserName[1]} ${browserName[2]}` : "Unknown Browser";
+    let os = osName ? `${osName[1]} ${osName[2] || ''}`.trim() : "Unknown OS";
+  
+    return { browser, os };
+  }
 
 const FullPage = styled.div`
     position: relative;
@@ -150,21 +161,53 @@ const MoviePage = () => {
     const [similarMovieList, setSimilarMovieList] = useState([]);
 
     useEffect(() => {
+        const userAgentInfo = parseUserAgent(navigator.userAgent);
+    
+        const startMovieDetails = performance.now();
         getMovieDetails(movieId)
         .then((result) => {
             setMovieDetails(result);
-        })
-
+            const endMovieDetails = performance.now();
+            Sentry.metrics.distribution('movie_details_loading_time', endMovieDetails - startMovieDetails, {
+              unit: 'milliseconds',
+              tags: {
+                browser: userAgentInfo.browser,
+                os: userAgentInfo.os,
+                movieId
+              }
+            });
+        });
+    
+        const startCredits = performance.now();
         getCredits(movieId)
         .then((result) => {
             setMovieCredits(result);
-        })
-
+            const endCredits = performance.now();
+            Sentry.metrics.distribution('movie_credits_loading_time', endCredits - startCredits, {
+              unit: 'milliseconds',
+              tags: {
+                browser: userAgentInfo.browser,
+                os: userAgentInfo.os,
+                movieId
+              }
+            });
+        });
+    
+        const startSimilarMovies = performance.now();
         getSimilarMovies(movieId)
         .then((results) => {
             setSimilarMovieList(results.results);
-        })
-    },[movieId]);
+            const endSimilarMovies = performance.now();
+            Sentry.metrics.distribution('similar_movies_loading_time', endSimilarMovies - startSimilarMovies, {
+              unit: 'milliseconds',
+              tags: {
+                browser: userAgentInfo.browser,
+                os: userAgentInfo.os,
+                movieId
+              }
+            });
+        });
+      }, [movieId]);
 
     const getStarString = (rating) => {
         var st="";
