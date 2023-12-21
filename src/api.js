@@ -1,5 +1,5 @@
 const api = {
-    "api-key":"" //Add api-key here
+    "api-key":"" 
 };
 
 export default api;

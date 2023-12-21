@@ -31,3 +31,6 @@ yarn-error.log*
 # vercel
 .vercel
 src/api.js
+
+# Sentry Config File
+.sentryclirc
